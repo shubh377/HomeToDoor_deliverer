@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'package:intl/intl.dart';
 
+import '../global/global.dart';
 import '../models/address.dart';
 import '../widgets/progress_bar.dart';
 import '../widgets/shipment_address_design.dart';
@@ -26,22 +28,20 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
 {
   String orderStatus = "";
   String orderByUser = "";
+  String sellerId = "";
 
-  getOrderInfo()
-  {
-    FirebaseFirestore.instance
-        .collection("orders")
-        .doc(widget.orderID).get().then((DocumentSnapshot)
-    {
+  getOrderInfo(){
+    FirebaseFirestore.instance.collection("orders").doc(widget.orderID).get().then((DocumentSnapshot){
       orderStatus = DocumentSnapshot.data()!["status"].toString();
       orderByUser = DocumentSnapshot.data()!["orderBy"].toString();
+      sellerId = DocumentSnapshot.data()!["chefUID"].toString();
     });
   }
 
   @override
   void initState() {
-    super.initState();
 
+    super.initState();
     getOrderInfo();
   }
 
@@ -52,7 +52,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
       body: SingleChildScrollView(
         child: FutureBuilder<DocumentSnapshot>(
           future: FirebaseFirestore.instance
-              .collection("orders")
+             .collection("orders")
               .doc(widget.orderID)
               .get(),
           builder: (c, snapshot)
@@ -77,9 +77,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Align(
-                            alignment: Alignment.centerLeft,
+                            alignment: Alignment.center,
                             child: Text(
-                              "€  " + dataMap["totalAmount"].toString(),
+                              "Total : ₹ " + dataMap["totalAmount"].toString(),
                               style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -97,17 +97,17 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
-                            "Order at: " +
+                            "Order on: " +
                                 DateFormat("dd MMMM, yyyy - hh:mm aa")
                                     .format(DateTime.fromMillisecondsSinceEpoch(int.parse(dataMap["orderTime"]))),
-                            style: const TextStyle(fontSize: 16, color: Colors.grey),
+                            style: const TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.bold),
                           ),
                         ),
-                        const Divider(thickness: 4,),
+                        const Divider(thickness: 1,),
                         orderStatus == "ended"
                             ? Image.asset("images/success.jpg")
                             : Image.asset("images/confirm_pick.png"),
-                        const Divider(thickness: 4,),
+                        const Divider(thickness: 1,),
                         FutureBuilder<DocumentSnapshot>(
                           future: FirebaseFirestore.instance
                               .collection("users")
@@ -123,6 +123,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen>
                                       snapshot.data!.data()! as Map<String, dynamic>
                                     ),
                                     orderStatus: orderStatus,
+                                    orderId: widget.orderID,
+                                    sellerId: sellerId,
+                                    orderByUser: orderByUser
                                   )
                                 : Center(child: circularProgress(),);
                           },
